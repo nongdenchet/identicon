@@ -1,55 +1,36 @@
-package process
+package generator
 
 import (
 	"image"
 	"image/color"
 	"image/draw"
-	"image/png"
-
-	"github.com/nongdenchet/identicon/helpers"
+	"math/rand"
+	"time"
 )
 
-func GenerateImage(hash []byte, size int) (string, error) {
-	// colors
-	r, g, b := pickColor(hash)
+func GenerateIcon(hash []byte, size int) *image.RGBA {
+	r, g, b := pickColor()
 	drawColor := color.RGBA{r, g, b, 255}
 	bgColor := color.RGBA{255, 255, 255, 255}
 
-	// init image
 	imageRect := image.Rect(0, 0, size, size)
 	result := image.NewRGBA(imageRect)
 	draw.Draw(result, imageRect, &image.Uniform{bgColor}, image.ZP, draw.Src)
 
-	// generate
 	grid := buildGrid(hash)
 	pixelMap := buildPixelMap(grid, size/5)
 	for _, rect := range pixelMap {
 		draw.Draw(result, rect, &image.Uniform{drawColor}, image.ZP, draw.Src)
 	}
 
-	// prepare file
-	filePath := helpers.GetIdenticonFilePath(hash, size)
-	file, err := helpers.PrepareFile(filePath)
-	defer file.Close()
-	if err != nil {
-		return "", err
-	}
-
-	// store image
-	err = png.Encode(file, result)
-	if err != nil {
-		return "", err
-	}
-
-	return filePath, nil
+	return result
 }
 
-func pickColor(hash []byte) (r, g, b byte) {
-	if len(hash) >= 3 {
-		return hash[0], hash[1], hash[2]
-	}
+func pickColor() (red, green, blue uint8) {
+	s := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(s)
 
-	return 0, 0, 0
+	return uint8(r.Intn(256)), uint8(r.Intn(256)), uint8(r.Intn(256))
 }
 
 func buildPixelMap(grid []byte, size int) []image.Rectangle {
@@ -59,6 +40,7 @@ func buildPixelMap(grid []byte, size int) []image.Rectangle {
 		if item%2 == 1 {
 			x := (index % 5) * size
 			y := (index / 5) * size
+
 			result = append(result, image.Rect(x, y, x+size, y+size))
 		}
 	}

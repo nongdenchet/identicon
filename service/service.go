@@ -3,17 +3,16 @@ package service
 import (
 	"context"
 	"errors"
-	"os"
-	"path/filepath"
 
 	"github.com/nongdenchet/identicon/encode"
-	"github.com/nongdenchet/identicon/helpers"
-	"github.com/nongdenchet/identicon/process"
+	"github.com/nongdenchet/identicon/repository"
 )
 
-type IdenticonServiceImpl struct{}
+type IdenticonServiceImpl struct {
+	Repo repository.IdenticonRepo
+}
 
-func (IdenticonServiceImpl) Generate(_ context.Context, text string, size int) (string, error) {
+func (s IdenticonServiceImpl) Generate(_ context.Context, text string, size int) (string, error) {
 	if len(text) == 0 {
 		return "", errors.New("text should not empty")
 	}
@@ -27,18 +26,14 @@ func (IdenticonServiceImpl) Generate(_ context.Context, text string, size int) (
 		return "", err
 	}
 
-	filePath := helpers.GetIdenticonFilePath(hash, size)
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		filePath, err = process.GenerateImage(hash, size)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	url, err := filepath.Abs(filePath)
+	filePath, err := s.Repo.GetIdenticon(hash, size)
 	if err != nil {
 		return "", err
 	}
 
-	return url, nil
+	if len(filePath) > 0 {
+		return filePath, nil
+	}
+
+	return s.Repo.CreateIdenticon(hash, size)
 }

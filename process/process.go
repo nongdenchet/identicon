@@ -5,56 +5,43 @@ import (
 	"image/color"
 	"image/draw"
 	"image/png"
-	"os"
-	"path/filepath"
+
+	"github.com/nongdenchet/identicon/helpers"
 )
 
-const dirPath = "output"
-
 func GenerateImage(hash []byte, size int) (string, error) {
+	// colors
 	r, g, b := pickColor(hash)
 	drawColor := color.RGBA{r, g, b, 255}
 	bgColor := color.RGBA{255, 255, 255, 255}
 
+	// init image
 	imageRect := image.Rect(0, 0, size, size)
 	result := image.NewRGBA(imageRect)
 	draw.Draw(result, imageRect, &image.Uniform{bgColor}, image.ZP, draw.Src)
 
+	// generate
 	grid := buildGrid(hash)
 	pixelMap := buildPixelMap(grid, size/5)
 	for _, rect := range pixelMap {
 		draw.Draw(result, rect, &image.Uniform{drawColor}, image.ZP, draw.Src)
 	}
 
-	filePath := dirPath + "/" + string(hash) + ".png"
-	file, err := prepareFile(filePath)
+	// prepare file
+	filePath := helpers.GetIdenticonFilePath(hash, size)
+	file, err := helpers.PrepareFile(filePath)
 	defer file.Close()
 	if err != nil {
 		return "", err
 	}
 
+	// store image
 	err = png.Encode(file, result)
 	if err != nil {
 		return "", err
 	}
 
-	absPath, err := filepath.Abs(filePath)
-	if err != nil {
-		return "", err
-	}
-
-	return absPath, nil
-}
-
-func prepareFile(filePath string) (*os.File, error) {
-	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		err = os.Mkdir(dirPath, 0600)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, 0600)
+	return filePath, nil
 }
 
 func pickColor(hash []byte) (r, g, b byte) {

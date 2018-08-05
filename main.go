@@ -1,12 +1,15 @@
 package main
 
 import (
-	"github.com/nongdenchet/identicon/encode"
-	"github.com/nongdenchet/identicon/process"
+	"log"
+	"net/http"
+
+	"github.com/nongdenchet/identicon/handler"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
-	process.GenerateImage(encode.GetMD5Hash("nongdenchet"), 500)
-	process.GenerateImage(encode.GetMD5Hash("hello world"), 500)
-	process.GenerateImage(encode.GetMD5Hash("grab"), 500)
+	http.Handle("/generate", handler.NewHandler())
+	http.Handle("/metrics", promhttp.Handler())
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

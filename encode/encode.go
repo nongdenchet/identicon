@@ -5,14 +5,16 @@ import (
 	"encoding/hex"
 )
 
-func GetMD5Hash(text string) []byte {
+func GetMD5Hash(text string) ([]byte, error) {
 	hasher := md5.New()
-	hasher.Write([]byte(text))
-	hash := hasher.Sum(nil)
+	_, err := hasher.Write([]byte(text))
+	if err != nil {
+		return nil, err
+	}
 
+	hash := hasher.Sum(nil)
 	size := hex.EncodedLen(len(hash))
 	result := make([]byte, size)
 	hex.Encode(result, hash)
-
-	return result
+	return result, nil
 }

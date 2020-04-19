@@ -1,8 +1,5 @@
 .PHONY: dep build run
 
-dep:
-	dep ensure
-
 build:
 	go build
 

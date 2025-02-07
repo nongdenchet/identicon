@@ -10,17 +10,17 @@ import (
 
 func GenerateIcon(hash []byte, size int) *image.RGBA {
 	r, g, b := pickColor()
-	drawColor := color.RGBA{r, g, b, 255}
-	bgColor := color.RGBA{255, 255, 255, 255}
+	drawColor := color.RGBA{R: r, G: g, B: b, A: 255}
+	bgColor := color.RGBA{R: 255, G: 255, B: 255, A: 255}
 
 	imageRect := image.Rect(0, 0, size, size)
 	result := image.NewRGBA(imageRect)
-	draw.Draw(result, imageRect, &image.Uniform{bgColor}, image.ZP, draw.Src)
+	draw.Draw(result, imageRect, &image.Uniform{C: bgColor}, image.Point{}, draw.Src)
 
 	grid := buildGrid(hash)
 	pixelMap := buildPixelMap(grid, size/5)
 	for _, rect := range pixelMap {
-		draw.Draw(result, rect, &image.Uniform{drawColor}, image.ZP, draw.Src)
+		draw.Draw(result, rect, &image.Uniform{C: drawColor}, image.Point{}, draw.Src)
 	}
 
 	return result
